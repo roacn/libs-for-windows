@@ -117,7 +117,7 @@ jobs:
         if: steps.build.outcome == 'success'
         uses: actions/upload-artifact@v3
         with:
-          name: "hiredis-windows-${{ matrix.arch }}-${{ matrix.configration }}-${{ matrix.build_shared_libs }}"
+          name: "hiredis-windows-${{ matrix.arch }}-${{ matrix.configration }}-${{ matrix.build_shared_libs }}-${{ env.hiredis_version }}"
           path:  |
             ${{ github.workspace }}
 
