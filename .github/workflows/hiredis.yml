@@ -2,7 +2,8 @@ name: Build Hiredis
 
 on:
   workflow_dispatch:
-
+  schedule:
+   - cron: 00 10 * * *
 env:
   author: redis
   repo: hiredis
@@ -104,6 +105,25 @@ jobs:
         if: steps.build.outcome == 'success'
         uses: actions/upload-artifact@v3
         with:
-          name: "windows-${{ matrix.arch }}-${{ matrix.configration }}-${{ matrix.build_shared_libs }}"
+          name: "hiredis-windows-${{ matrix.arch }}-${{ matrix.configration }}-${{ matrix.build_shared_libs }}"
           path:  |
             ${{ github.workspace }}
+
+      - name: Delete Workflows
+        continue-on-error: true
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 1
+          keep_minimum_runs: 3
+          
+      - name: Delete Releases
+        continue-on-error: true
+        uses: dev-drprasad/delete-older-releases@master
+        with:
+          keep_latest: 10
+          delete_tags: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        
