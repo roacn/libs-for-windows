@@ -1,0 +1,109 @@
+name: Build Hiredis
+
+on:
+  workflow_dispatch:
+
+env:
+  author: redis
+  repo: hiredis
+  workspace: ${{ github.workspace }}
+  
+jobs:
+  build:
+    name: hiredis
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        configration: [release, debug]
+        build_shared_libs: [shared, static]
+        arch: [x64, x86]
+
+    steps:
+      - name: Install MSBuild
+        uses: microsoft/setup-msbuild@main
+        with:
+          msbuild-architecture: ${{ matrix.arch }}
+      - name: Install 7-Zip and Git using Chocolatey
+        run: |
+          choco install git 7zip.install -y
+        shell: powershell
+      
+      - name: Clone Source
+        run: |
+          git clone https://github.com/${{ env.author }}/${{ env.repo }}.git ${{ github.workspace }}\${{ env.repo }}
+          cd ${{ github.workspace }}\${{ env.repo }}
+          $git_head = git rev-parse HEAD
+          $git_head = $git_head.Substring(0,7)
+          echo "git_head=$git_head" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $hiredis_version = Get-Content -Path hiredis.h | Where-Object { $_ -like "*#define HIREDIS_SONAME*" } | ForEach-Object {$_ -Split " "} | Select-Object -Last 1
+          echo "hiredis_version=$hiredis_version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          mkdir ${{ github.workspace }}\${{ env.repo }}\build
+          
+      - name: Run CMake
+        run: |
+          cd ${{ github.workspace }}\${{ env.repo }}\build
+
+          if ( "${{ matrix.build_shared_libs }}" -eq "shared" ) {
+            if ( "${{ matrix.arch }}" -eq "x64" ) {
+              cmake .. -A x64 -Wno-dev
+            } else {
+              cmake .. -A win32 -Wno-dev
+            }
+          } else {
+            if ( "${{ matrix.arch }}" -eq "x64" ) {
+              cmake .. -A x64 -Wno-dev -DBUILD_SHARED_LIBS=OFF
+            } else {
+              cmake .. -A win32 -Wno-dev -DBUILD_SHARED_LIBS=OFF
+            }
+          }
+          
+      - name: Build Hiredis
+        id: build
+        run: |
+          cd ${{ github.workspace }}\${{ env.repo }}\build
+          
+          if ( "${{ matrix.configration }}" -eq "release" ) {
+            MSBuild hiredis.vcxproj /p:Configuration=Release /p:Platform=${{ matrix.arch }}
+          } else {
+            MSBuild hiredis.vcxproj /p:Configuration=Debug /p:Platform=${{ matrix.arch }}
+          }
+
+      - name: Prepare Upload
+        continue-on-error: true
+        if: steps.build.outcome == 'success'
+        run: |
+          cd ${{ github.workspace }}\${{ env.repo }}\build
+          
+          mkdir hiredis\hiredis
+          if ( "${{ matrix.configration }}" -eq "release" ) {
+            Copy-Item .\Release\* .\hiredis\ -Force
+          } else {
+            Copy-Item .\Debug\* .\hiredis\ -Force
+          }
+          
+          cd ${{ github.workspace }}\${{ env.repo }}
+          Copy-Item *.h .\build\hiredis\hiredis -Force
+          Copy-Item adapters .\build\hiredis\hiredis\adapters -Force -Recurse
+          7z a -tzip .\hiredis-windows-${{ matrix.configration }}-${{ matrix.build_shared_libs }}-${{ matrix.arch }}-${{ env.hiredis_version }}.zip .\build\hiredis\*
+
+      - name: Release Hiredis
+        continue-on-error: true
+        if: steps.build.outcome == 'success'
+        uses: ncipollo/release-action@main
+        with:
+          name: hiredis-${{ env.hiredis_version }}
+          tag: ${{ env.git_head }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          removeArtifacts: false
+          artifacts: "${{ github.workspace }}\\${{ env.repo }}\\hiredis-windows-${{ matrix.configration }}-${{ matrix.build_shared_libs }}-${{ matrix.arch }}-${{ env.hiredis_version }}.zip"
+          
+      - name: Upload Artifacts
+        continue-on-error: true
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: "windows-${{ matrix.arch }}-${{ matrix.configration }}-${{ matrix.build_shared_libs }}"
+          path:  |
+            ${{ github.workspace }}
