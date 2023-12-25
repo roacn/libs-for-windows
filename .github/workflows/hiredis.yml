@@ -41,6 +41,7 @@ jobs:
             git clone https://github.com/${{ env.author }}/${{ env.repo }}.git ${{ github.workspace }}\${{ env.repo }}
           } else {
             git clone https://github.com/${{ env.author }}/${{ env.repo }}.git ${{ github.workspace }}\${{ env.repo }}
+            cd ${{ github.workspace }}\${{ env.repo }}
             git checkout ${{github.event.inputs.branch}}
           }
           cd ${{ github.workspace }}\${{ env.repo }}
