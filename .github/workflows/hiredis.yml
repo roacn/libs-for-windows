@@ -21,9 +21,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        type: [release, debug]
-        libs: [shared, static]
         arch: [x64, x86]
+        libs: [shared, static]
+        type: [release, debug]
 
     steps:
       - name: Install MSBuild
@@ -98,7 +98,7 @@ jobs:
           cd ${{ github.workspace }}\${{ env.repo }}
           Copy-Item *.h .\build\hiredis\hiredis -Force
           Copy-Item adapters .\build\hiredis\hiredis\adapters -Force -Recurse
-          7z a -tzip .\hiredis-windows-${{ matrix.arch }}-${{ matrix.type }}-${{ matrix.libs }}-${{ env.hiredis_version }}.zip .\build\hiredis\*
+          7z a -tzip .\hiredis-windows-${{ matrix.arch }}-${{ matrix.libs }}-${{ matrix.type }}-${{ env.hiredis_version }}.zip .\build\hiredis\*
 
       - name: Release Hiredis
         continue-on-error: true
@@ -110,14 +110,14 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
           removeArtifacts: false
-          artifacts: "${{ github.workspace }}\\${{ env.repo }}\\hiredis-windows-${{ matrix.arch }}-${{ matrix.type }}-${{ matrix.libs }}-${{ env.hiredis_version }}.zip"
+          artifacts: "${{ github.workspace }}\\${{ env.repo }}\\hiredis-windows-${{ matrix.arch }}-${{ matrix.libs }}-${{ matrix.type }}-${{ env.hiredis_version }}.zip"
           
       - name: Upload Artifacts
         continue-on-error: true
         if: steps.build.outcome == 'success'
         uses: actions/upload-artifact@v3
         with:
-          name: "hiredis-windows-${{ matrix.arch }}-${{ matrix.type }}-${{ matrix.libs }}-${{ env.hiredis_version }}"
+          name: "hiredis-windows-${{ matrix.arch }}-${{ matrix.libs }}-${{ matrix.type }}-${{ env.hiredis_version }}"
           path:  |
             ${{ github.workspace }}
 
