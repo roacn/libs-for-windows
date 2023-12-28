@@ -106,7 +106,7 @@ jobs:
         uses: ncipollo/release-action@main
         with:
           name: hiredis-${{ env.hiredis_version }}
-          tag: ${{ env.hiredis_version }}-${{ env.git_head }}
+          tag: hiredis-${{ env.hiredis_version }}
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
           removeArtifacts: false
