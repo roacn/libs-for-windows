@@ -64,7 +64,7 @@ jobs:
           
           # b2 --help
           .\b2.exe stage threading=multi runtime-link=shared link=${{ matrix.link }} address-model=${{ matrix.model }} variant=${{ matrix.variant }}
-          #.\b2.exe stage threading=multi runtime-link=static link=${{ matrix.link }} address-model=${{ matrix.model }} variant=${{ matrix.variant }}
+          .\b2.exe stage threading=multi runtime-link=static link=${{ matrix.link }} address-model=${{ matrix.model }} variant=${{ matrix.variant }}
           if ( "${{ matrix.model }}" -eq "32") {
             7z a -tzip .\release\boost-windows-win${{ matrix.model }}-${{ matrix.link }}-${{ matrix.variant }}-${{ env.version }}.zip .\stage\*
           } elseif ( "${{ matrix.model }}" -eq "64") {
