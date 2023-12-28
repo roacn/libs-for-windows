@@ -136,6 +136,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
           removeArtifacts: false
-          body: "${{github.event.inputs.branch}}"
+          body: "${{ env.git_head }}"
           artifacts: "${{ github.workspace }}\\${{ env.repo }}\\release\\*.zip"
           
