@@ -49,8 +49,9 @@ jobs:
             git checkout ${{github.event.inputs.branch}}
           }
           cd ${{ github.workspace }}\${{ env.repo }}
-          
-          Move-Item -Path .\src\tool_hugehelp.c.cvs -Destination .\src\tool_hugehelp.c -Force
+
+          .\buildconf.bat
+          # Move-Item -Path .\src\tool_hugehelp.c.cvs -Destination .\src\tool_hugehelp.c -Force
           
           $git_head = git rev-parse HEAD
           $git_head = $git_head.Substring(0,7)
